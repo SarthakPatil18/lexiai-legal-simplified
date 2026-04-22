@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/SiteNav";
 import { useEffect, useRef, useState } from "react";
-import { Send, Paperclip, Plus, MessageSquare, Sparkles } from "lucide-react";
+import { Send, Paperclip, Plus, MessageSquare, Sparkles, AlertTriangle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
