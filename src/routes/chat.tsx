@@ -262,8 +262,16 @@ function Bubble({ msg }: { msg: Msg }) {
       <div className="size-9 shrink-0 border border-gold/40 flex items-center justify-center mt-1">
         <div className="size-1.5 bg-gold" />
       </div>
-      <div className="flex-1 glass p-5 whitespace-pre-wrap text-parchment/90 leading-relaxed">
-        {msg.text}
+      <div className="flex-1 glass p-6 text-parchment/90 leading-relaxed prose prose-invert prose-sm max-w-none
+        prose-headings:font-serif prose-headings:text-parchment prose-headings:mt-4 prose-headings:mb-2
+        prose-strong:text-gold prose-strong:font-semibold
+        prose-em:text-parchment/60
+        prose-a:text-gold
+        prose-code:text-gold prose-code:bg-onyx/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+        prose-ul:my-2 prose-li:my-0.5 prose-li:marker:text-gold
+        prose-hr:border-gold/20
+        prose-blockquote:border-l-gold prose-blockquote:text-parchment/70 prose-blockquote:not-italic">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
       </div>
     </div>
   );
