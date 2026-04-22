@@ -196,7 +196,13 @@ function ChatPage() {
             ) : (
               <div className="max-w-3xl mx-auto space-y-8">
                 {messages.map((m, i) => <Bubble key={i} msg={m} />)}
-                {thinking && <TypingBubble />}
+                {thinking && messages[messages.length - 1]?.role !== "ai" && <TypingBubble />}
+                {error && (
+                  <div className="flex gap-3 items-start glass border-destructive/40 bg-destructive/5 p-4 animate-fade-up">
+                    <AlertTriangle className="size-4 text-destructive shrink-0 mt-0.5" />
+                    <div className="text-sm text-parchment/80">{error}</div>
+                  </div>
+                )}
               </div>
             )}
           </div>
