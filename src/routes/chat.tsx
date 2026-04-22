@@ -44,23 +44,98 @@ function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, thinking]);
 
-  const send = (text: string) => {
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const send = async (text: string) => {
     const t = text.trim();
-    if (!t) return;
-    setMessages((m) => [...m, { role: "user", text: t }]);
+    if (!t || thinking) return;
+    setError(null);
+
+    const nextHistory: Msg[] = [...messages, { role: "user", text: t }];
+    setMessages(nextHistory);
     setInput("");
     setThinking(true);
-    setTimeout(() => {
-      setMessages((m) => [
-        ...m,
-        {
-          role: "ai",
-          text:
-            "Here is a plain-language breakdown:\n\n• Core Issue — the central legal question and parties involved.\n• Verdict — the holding and the reasoning the court relied on.\n• Key Terms — any Latin or statutory phrases, defined in context.\n• Risks — exposure points and likely outcomes if challenged.\n• Precedents — three closely related judgments worth reviewing.\n\nWould you like me to expand any section, generate a chronological timeline, or draft a one-paragraph executive summary?",
-        },
-      ]);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          messages: nextHistory.map((m) => ({
+            role: m.role === "ai" ? "assistant" : "user",
+            content: m.text,
+          })),
+        }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        let msg = "Something went wrong. Please try again.";
+        try {
+          const j = await resp.json();
+          if (j?.error) msg = j.error;
+        } catch {}
+        setError(msg);
+        setThinking(false);
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantSoFar = "";
+      let started = false;
+      let done = false;
+
+      while (!done) {
+        const { value, done: streamDone } = await reader.read();
+        if (streamDone) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let nl: number;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, nl);
+          buffer = buffer.slice(nl + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line || line.startsWith(":")) continue;
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (json === "[DONE]") { done = true; break; }
+          try {
+            const parsed = JSON.parse(json);
+            const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (delta) {
+              assistantSoFar += delta;
+              if (!started) {
+                started = true;
+                setMessages((m) => [...m, { role: "ai", text: assistantSoFar }]);
+              } else {
+                setMessages((m) => {
+                  const copy = m.slice();
+                  copy[copy.length - 1] = { role: "ai", text: assistantSoFar };
+                  return copy;
+                });
+              }
+            }
+          } catch {
+            buffer = line + "\n" + buffer;
+            break;
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        console.error(err);
+        setError("Network error. Please try again.");
+      }
+    } finally {
       setThinking(false);
-    }, 1400);
+      abortRef.current = null;
+    }
   };
 
   return (
