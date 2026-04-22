@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/SiteNav";
 import { useEffect, useRef, useState } from "react";
-import { Send, Paperclip, Plus, MessageSquare, Sparkles } from "lucide-react";
+import { Send, Paperclip, Plus, MessageSquare, Sparkles, AlertTriangle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -42,23 +44,98 @@ function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, thinking]);
 
-  const send = (text: string) => {
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const send = async (text: string) => {
     const t = text.trim();
-    if (!t) return;
-    setMessages((m) => [...m, { role: "user", text: t }]);
+    if (!t || thinking) return;
+    setError(null);
+
+    const nextHistory: Msg[] = [...messages, { role: "user", text: t }];
+    setMessages(nextHistory);
     setInput("");
     setThinking(true);
-    setTimeout(() => {
-      setMessages((m) => [
-        ...m,
-        {
-          role: "ai",
-          text:
-            "Here is a plain-language breakdown:\n\n• Core Issue — the central legal question and parties involved.\n• Verdict — the holding and the reasoning the court relied on.\n• Key Terms — any Latin or statutory phrases, defined in context.\n• Risks — exposure points and likely outcomes if challenged.\n• Precedents — three closely related judgments worth reviewing.\n\nWould you like me to expand any section, generate a chronological timeline, or draft a one-paragraph executive summary?",
-        },
-      ]);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          messages: nextHistory.map((m) => ({
+            role: m.role === "ai" ? "assistant" : "user",
+            content: m.text,
+          })),
+        }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        let msg = "Something went wrong. Please try again.";
+        try {
+          const j = await resp.json();
+          if (j?.error) msg = j.error;
+        } catch {}
+        setError(msg);
+        setThinking(false);
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantSoFar = "";
+      let started = false;
+      let done = false;
+
+      while (!done) {
+        const { value, done: streamDone } = await reader.read();
+        if (streamDone) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let nl: number;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, nl);
+          buffer = buffer.slice(nl + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line || line.startsWith(":")) continue;
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (json === "[DONE]") { done = true; break; }
+          try {
+            const parsed = JSON.parse(json);
+            const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (delta) {
+              assistantSoFar += delta;
+              if (!started) {
+                started = true;
+                setMessages((m) => [...m, { role: "ai", text: assistantSoFar }]);
+              } else {
+                setMessages((m) => {
+                  const copy = m.slice();
+                  copy[copy.length - 1] = { role: "ai", text: assistantSoFar };
+                  return copy;
+                });
+              }
+            }
+          } catch {
+            buffer = line + "\n" + buffer;
+            break;
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        console.error(err);
+        setError("Network error. Please try again.");
+      }
+    } finally {
       setThinking(false);
-    }, 1400);
+      abortRef.current = null;
+    }
   };
 
   return (
@@ -119,7 +196,13 @@ function ChatPage() {
             ) : (
               <div className="max-w-3xl mx-auto space-y-8">
                 {messages.map((m, i) => <Bubble key={i} msg={m} />)}
-                {thinking && <TypingBubble />}
+                {thinking && messages[messages.length - 1]?.role !== "ai" && <TypingBubble />}
+                {error && (
+                  <div className="flex gap-3 items-start glass border-destructive/40 bg-destructive/5 p-4 animate-fade-up">
+                    <AlertTriangle className="size-4 text-destructive shrink-0 mt-0.5" />
+                    <div className="text-sm text-parchment/80">{error}</div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -179,8 +262,16 @@ function Bubble({ msg }: { msg: Msg }) {
       <div className="size-9 shrink-0 border border-gold/40 flex items-center justify-center mt-1">
         <div className="size-1.5 bg-gold" />
       </div>
-      <div className="flex-1 glass p-5 whitespace-pre-wrap text-parchment/90 leading-relaxed">
-        {msg.text}
+      <div className="flex-1 glass p-6 text-parchment/90 leading-relaxed prose prose-invert prose-sm max-w-none
+        prose-headings:font-serif prose-headings:text-parchment prose-headings:mt-4 prose-headings:mb-2
+        prose-strong:text-gold prose-strong:font-semibold
+        prose-em:text-parchment/60
+        prose-a:text-gold
+        prose-code:text-gold prose-code:bg-onyx/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+        prose-ul:my-2 prose-li:my-0.5 prose-li:marker:text-gold
+        prose-hr:border-gold/20
+        prose-blockquote:border-l-gold prose-blockquote:text-parchment/70 prose-blockquote:not-italic">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
       </div>
     </div>
   );
