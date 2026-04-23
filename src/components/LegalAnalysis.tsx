@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FileText, ListChecks, Scale, Gavel, Lightbulb, ShieldAlert,
   Clock, BookMarked, Compass, Copy, Check, ChevronDown, Scroll, ExternalLink,
@@ -207,11 +207,10 @@ function Card({
 }) {
   const [open, setOpen] = useState(true);
   const [copied, setCopied] = useState(false);
-  const ref = useState<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const copy = () => {
-    const node = (ref[0] as HTMLDivElement | null);
-    const text = node?.innerText ?? "";
+    const text = contentRef.current?.innerText ?? "";
     navigator.clipboard.writeText(`${title}\n\n${text}`).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
@@ -253,7 +252,7 @@ function Card({
         </div>
       </div>
       {open && (
-        <div ref={(el) => (ref[0] = el)} className="animate-fade-in">
+        <div ref={contentRef} className="animate-fade-in">
           {children}
         </div>
       )}
