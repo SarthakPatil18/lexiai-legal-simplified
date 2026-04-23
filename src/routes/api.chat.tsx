@@ -58,12 +58,12 @@ export const Route = createFileRoute("/api/chat")({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
-              stream: true,
+              model: "google/gemini-2.5-flash",
               messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 ...messages,
               ],
+              response_format: { type: "json_object" },
             }),
           });
 
@@ -88,8 +88,10 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          return new Response(upstream.body, {
-            headers: { "Content-Type": "text/event-stream" },
+          const data = await upstream.json();
+          const content = data?.choices?.[0]?.message?.content ?? "";
+          return new Response(JSON.stringify({ content }), {
+            headers: { "Content-Type": "application/json" },
           });
         } catch (err) {
           console.error("chat route error:", err);
