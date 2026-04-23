@@ -2,14 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/SiteNav";
 import { useEffect, useRef, useState } from "react";
 import { Send, Paperclip, Plus, MessageSquare, Sparkles, AlertTriangle } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import {
+  LegalAnalysis,
+  AnalysisSkeleton,
+  parseAnalysis,
+  type Analysis,
+} from "@/components/LegalAnalysis";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
     meta: [
       { title: "LexiAI Console — AI Legal Assistant" },
-      { name: "description", content: "Paste a legal case, upload a document, or ask any question. LexiAI explains it in plain language." },
+      { name: "description", content: "Paste a legal case, upload a document, or ask any question. LexiAI returns a structured plain-language analysis." },
       { property: "og:title", content: "LexiAI Console" },
       { property: "og:description", content: "Your AI legal associate, on call." },
     ],
@@ -17,7 +21,9 @@ export const Route = createFileRoute("/chat")({
   component: ChatPage,
 });
 
-type Msg = { role: "user" | "ai"; text: string };
+type Turn =
+  | { role: "user"; text: string }
+  | { role: "ai"; analysis: Analysis | null; raw: string };
 
 const STARTER_THREADS = [
   "Sinclair v. Thorne — Non-compete",
@@ -35,107 +41,62 @@ const SUGGESTIONS = [
 ];
 
 function ChatPage() {
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, thinking]);
-
-  const [error, setError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  }, [turns, thinking]);
 
   const send = async (text: string) => {
     const t = text.trim();
     if (!t || thinking) return;
     setError(null);
 
-    const nextHistory: Msg[] = [...messages, { role: "user", text: t }];
-    setMessages(nextHistory);
+    const next: Turn[] = [...turns, { role: "user", text: t }];
+    setTurns(next);
     setInput("");
     setThinking(true);
-
-    const controller = new AbortController();
-    abortRef.current = controller;
 
     try {
       const resp = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
         body: JSON.stringify({
-          messages: nextHistory.map((m) => ({
-            role: m.role === "ai" ? "assistant" : "user",
-            content: m.text,
-          })),
+          messages: next.map((m) =>
+            m.role === "user"
+              ? { role: "user", content: m.text }
+              : { role: "assistant", content: m.raw }
+          ),
         }),
       });
 
-      if (!resp.ok || !resp.body) {
+      if (!resp.ok) {
         let msg = "Something went wrong. Please try again.";
-        try {
-          const j = await resp.json();
-          if (j?.error) msg = j.error;
-        } catch {}
+        try { const j = await resp.json(); if (j?.error) msg = j.error; } catch {}
         setError(msg);
         setThinking(false);
         return;
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let assistantSoFar = "";
-      let started = false;
-      let done = false;
-
-      while (!done) {
-        const { value, done: streamDone } = await reader.read();
-        if (streamDone) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let nl: number;
-        while ((nl = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nl);
-          buffer = buffer.slice(nl + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line || line.startsWith(":")) continue;
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") { done = true; break; }
-          try {
-            const parsed = JSON.parse(json);
-            const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (delta) {
-              assistantSoFar += delta;
-              if (!started) {
-                started = true;
-                setMessages((m) => [...m, { role: "ai", text: assistantSoFar }]);
-              } else {
-                setMessages((m) => {
-                  const copy = m.slice();
-                  copy[copy.length - 1] = { role: "ai", text: assistantSoFar };
-                  return copy;
-                });
-              }
-            }
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
-      }
+      const data = await resp.json();
+      const raw: string = data?.content ?? "";
+      const analysis = parseAnalysis(raw);
+      setTurns((prev) => [...prev, { role: "ai", analysis, raw }]);
     } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        console.error(err);
-        setError("Network error. Please try again.");
-      }
+      console.error(err);
+      setError("Network error. Please try again.");
     } finally {
       setThinking(false);
-      abortRef.current = null;
     }
+  };
+
+  const newConsult = () => {
+    setTurns([]);
+    setError(null);
   };
 
   return (
@@ -146,7 +107,7 @@ function ChatPage() {
         {/* Sidebar */}
         <aside className="hidden lg:flex flex-col border-r border-gold/10 p-5 gap-2">
           <button
-            onClick={() => setMessages([])}
+            onClick={newConsult}
             className="flex items-center justify-between gap-2 px-4 py-3 border border-gold/30 text-gold text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-gold/5 transition-colors mb-4"
           >
             New Consultation <Plus className="size-4" />
@@ -168,35 +129,28 @@ function ChatPage() {
         {/* Chat */}
         <main className="flex flex-col h-[calc(100dvh-5rem)]">
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 md:px-12 py-10">
-            {messages.length === 0 ? (
-              <div className="max-w-3xl mx-auto text-center pt-12 animate-fade-up">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-gold/20 bg-gold/5 mb-6">
-                  <Sparkles className="size-3 text-gold" />
-                  <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gold">LexiAI Console</span>
-                </div>
-                <h1 className="font-serif text-5xl md:text-6xl mb-4 text-balance">
-                  Ask anything <span className="italic gold-text">legal</span>.
-                </h1>
-                <p className="text-parchment/60 mb-12">
-                  Paste a judgment, upload a contract, or ask a question. Receive plain-language clarity.
-                </p>
-                <div className="grid sm:grid-cols-2 gap-3 text-left">
-                  {SUGGESTIONS.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => send(s)}
-                      className="glass p-5 hover-lift text-sm text-parchment/80 hover:text-parchment text-left"
-                    >
-                      <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-gold mb-2">Suggested</div>
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            {turns.length === 0 && !thinking ? (
+              <EmptyState onPick={send} />
             ) : (
-              <div className="max-w-3xl mx-auto space-y-8">
-                {messages.map((m, i) => <Bubble key={i} msg={m} />)}
-                {thinking && messages[messages.length - 1]?.role !== "ai" && <TypingBubble />}
+              <div className="max-w-3xl mx-auto space-y-10">
+                {turns.map((m, i) =>
+                  m.role === "user" ? (
+                    <UserBubble key={i} text={m.text} />
+                  ) : (
+                    <AiTurn key={i} turn={m} />
+                  )
+                )}
+                {thinking && (
+                  <div className="animate-fade-up">
+                    <div className="flex items-center gap-3 mb-4 text-[10px] font-bold tracking-[0.3em] uppercase text-gold">
+                      <span className="size-1.5 rounded-full bg-gold animate-typing" />
+                      <span className="size-1.5 rounded-full bg-gold animate-typing [animation-delay:150ms]" />
+                      <span className="size-1.5 rounded-full bg-gold animate-typing [animation-delay:300ms]" />
+                      <span>Drafting analysis…</span>
+                    </div>
+                    <AnalysisSkeleton />
+                  </div>
+                )}
                 {error && (
                   <div className="flex gap-3 items-start glass border-destructive/40 bg-destructive/5 p-4 animate-fade-up">
                     <AlertTriangle className="size-4 text-destructive shrink-0 mt-0.5" />
@@ -229,7 +183,7 @@ function ChatPage() {
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || thinking}
                   className="size-10 shrink-0 flex items-center justify-center bg-gold text-onyx hover:bg-gold-soft disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   aria-label="Send"
                 >
@@ -247,12 +201,54 @@ function ChatPage() {
   );
 }
 
-function Bubble({ msg }: { msg: Msg }) {
-  if (msg.role === "user") {
+function EmptyState({ onPick }: { onPick: (s: string) => void }) {
+  return (
+    <div className="max-w-3xl mx-auto text-center pt-12 animate-fade-up">
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-gold/20 bg-gold/5 mb-6">
+        <Sparkles className="size-3 text-gold" />
+        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gold">LexiAI Console</span>
+      </div>
+      <h1 className="font-serif text-5xl md:text-6xl mb-4 text-balance">
+        Ask anything <span className="italic gold-text">legal</span>.
+      </h1>
+      <p className="text-parchment/60 mb-12">
+        Paste a judgment, upload a contract, or ask a question. Receive a structured plain-language analysis with risk, timeline, and next steps.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-3 text-left">
+        {SUGGESTIONS.map((s) => (
+          <button
+            key={s}
+            onClick={() => onPick(s)}
+            className="glass p-5 hover-lift text-sm text-parchment/80 hover:text-parchment text-left"
+          >
+            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-gold mb-2">Suggested</div>
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function UserBubble({ text }: { text: string }) {
+  return (
+    <div className="flex justify-end animate-fade-up">
+      <div className="max-w-[80%] bg-gold/10 border border-gold/20 px-5 py-4 text-parchment whitespace-pre-wrap">
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function AiTurn({ turn }: { turn: Extract<Turn, { role: "ai" }> }) {
+  if (!turn.analysis) {
     return (
-      <div className="flex justify-end animate-fade-up">
-        <div className="max-w-[80%] bg-gold/10 border border-gold/20 px-5 py-4 text-parchment whitespace-pre-wrap">
-          {msg.text}
+      <div className="flex gap-4 animate-fade-up">
+        <div className="size-9 shrink-0 border border-gold/40 flex items-center justify-center mt-1">
+          <div className="size-1.5 bg-gold" />
+        </div>
+        <div className="flex-1 glass p-6 text-parchment/80 text-sm whitespace-pre-wrap">
+          {turn.raw || "No response."}
         </div>
       </div>
     );
@@ -262,31 +258,8 @@ function Bubble({ msg }: { msg: Msg }) {
       <div className="size-9 shrink-0 border border-gold/40 flex items-center justify-center mt-1">
         <div className="size-1.5 bg-gold" />
       </div>
-      <div className="flex-1 glass p-6 text-parchment/90 leading-relaxed prose prose-invert prose-sm max-w-none
-        prose-headings:font-serif prose-headings:text-parchment prose-headings:mt-4 prose-headings:mb-2
-        prose-strong:text-gold prose-strong:font-semibold
-        prose-em:text-parchment/60
-        prose-a:text-gold
-        prose-code:text-gold prose-code:bg-onyx/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
-        prose-ul:my-2 prose-li:my-0.5 prose-li:marker:text-gold
-        prose-hr:border-gold/20
-        prose-blockquote:border-l-gold prose-blockquote:text-parchment/70 prose-blockquote:not-italic">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
-      </div>
-    </div>
-  );
-}
-
-function TypingBubble() {
-  return (
-    <div className="flex gap-4 animate-fade-up">
-      <div className="size-9 shrink-0 border border-gold/40 flex items-center justify-center mt-1">
-        <div className="size-1.5 bg-gold animate-slow-pulse" />
-      </div>
-      <div className="glass p-5 flex items-center gap-1.5">
-        <span className="size-1.5 rounded-full bg-gold animate-typing" />
-        <span className="size-1.5 rounded-full bg-gold animate-typing [animation-delay:150ms]" />
-        <span className="size-1.5 rounded-full bg-gold animate-typing [animation-delay:300ms]" />
+      <div className="flex-1 min-w-0">
+        <LegalAnalysis data={turn.analysis} />
       </div>
     </div>
   );
