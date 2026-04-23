@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function SiteNav() {
   return (
@@ -16,12 +17,15 @@ export function SiteNav() {
           <a href="/#stats" className="hover:text-gold transition-colors">Impact</a>
           <a href="/#testimonials" className="hover:text-gold transition-colors">Voices</a>
         </div>
-        <Link
-          to="/chat"
-          className="px-5 md:px-7 py-3 bg-gold text-onyx text-[11px] font-bold tracking-[0.2em] uppercase signet hover:bg-gold-soft transition-all hover:-translate-y-0.5"
-        >
-          Open Console
-        </Link>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            to="/chat"
+            className="px-5 md:px-7 py-3 bg-gold text-onyx text-[11px] font-bold tracking-[0.2em] uppercase signet hover:bg-gold-soft transition-all hover:-translate-y-0.5"
+          >
+            Open Console
+          </Link>
+        </div>
       </div>
     </nav>
   );

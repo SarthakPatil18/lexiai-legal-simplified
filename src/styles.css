@@ -78,7 +78,7 @@
 :root {
   --radius: 0.5rem;
 
-  /* Institutional Legacy Gold palette */
+  /* Institutional Legacy Gold palette — DARK (default) */
   --onyx: oklch(0.13 0.005 270);
   --slate-wax: oklch(0.18 0.005 270);
   --parchment: oklch(0.92 0.005 90);
@@ -115,8 +115,48 @@
   --sidebar-ring: var(--gold);
 }
 
-.dark {
-  /* same — site is dark by default */
+/* LIGHT MODE — warm parchment over deep gold ink */
+.light {
+  --onyx: oklch(0.98 0.008 90);        /* page bg — warm ivory */
+  --slate-wax: oklch(0.95 0.012 85);   /* card surface — soft cream */
+  --parchment: oklch(0.22 0.01 270);   /* foreground — deep ink */
+  --gold: oklch(0.55 0.13 70);         /* richer gold for contrast */
+  --gold-soft: oklch(0.65 0.12 75);
+  --gold-deep: oklch(0.42 0.12 65);
+
+  --background: var(--onyx);
+  --foreground: var(--parchment);
+  --card: var(--slate-wax);
+  --card-foreground: var(--parchment);
+  --popover: var(--slate-wax);
+  --popover-foreground: var(--parchment);
+  --primary: var(--gold);
+  --primary-foreground: oklch(0.98 0.008 90);
+  --secondary: oklch(0.92 0.012 85);
+  --secondary-foreground: var(--parchment);
+  --muted: oklch(0.93 0.01 85);
+  --muted-foreground: oklch(0.45 0.01 270);
+  --accent: oklch(0.90 0.03 80);
+  --accent-foreground: var(--gold-deep);
+  --destructive: oklch(0.55 0.20 25);
+  --destructive-foreground: oklch(0.98 0.008 90);
+  --border: color-mix(in oklab, var(--gold) 25%, transparent);
+  --input: oklch(0.94 0.01 85);
+  --ring: var(--gold);
+  --sidebar: var(--slate-wax);
+  --sidebar-foreground: var(--parchment);
+  --sidebar-primary: var(--gold);
+  --sidebar-primary-foreground: oklch(0.98 0.008 90);
+  --sidebar-accent: oklch(0.92 0.012 85);
+  --sidebar-accent-foreground: var(--gold-deep);
+  --sidebar-border: color-mix(in oklab, var(--gold) 20%, transparent);
+  --sidebar-ring: var(--gold);
+}
+
+html, body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 @layer base {
