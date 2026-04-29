@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteNav } from "@/components/SiteNav";
 import { useEffect, useRef, useState } from "react";
-import { Send, Paperclip, Plus, MessageSquare, Sparkles, AlertTriangle } from "lucide-react";
+import { Send, Paperclip, Plus, MessageSquare, AlertTriangle } from "lucide-react";
 import {
   LegalAnalysis,
   AnalysisSkeleton,
@@ -112,15 +112,15 @@ function ChatPage() {
           >
             New consultation <Plus className="size-4" />
           </button>
-          <div className="text-xs font-medium text-muted-foreground px-2 mb-2 mt-2">
-            Recent threads
+          <div className="text-xs font-medium text-muted-foreground px-2 mb-2 mt-2 uppercase tracking-[0.12em]">
+            Recent
           </div>
           {STARTER_THREADS.map((t) => (
             <button
               key={t}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-left"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors text-left"
             >
-              <MessageSquare className="size-3.5 shrink-0 text-primary/60" />
+              <MessageSquare className="size-3.5 shrink-0" />
               <span className="truncate">{t}</span>
             </button>
           ))}
@@ -142,17 +142,17 @@ function ChatPage() {
                 )}
                 {thinking && (
                   <div className="animate-fade-up">
-                    <div className="flex items-center gap-2 mb-4 text-xs font-medium text-primary">
-                      <span className="size-1.5 rounded-full bg-primary animate-typing" />
-                      <span className="size-1.5 rounded-full bg-primary animate-typing [animation-delay:150ms]" />
-                      <span className="size-1.5 rounded-full bg-primary animate-typing [animation-delay:300ms]" />
+                    <div className="flex items-center gap-2 mb-4 text-xs font-medium text-muted-foreground">
+                      <span className="size-1.5 rounded-full bg-foreground animate-typing" />
+                      <span className="size-1.5 rounded-full bg-foreground animate-typing [animation-delay:150ms]" />
+                      <span className="size-1.5 rounded-full bg-foreground animate-typing [animation-delay:300ms]" />
                       <span className="ml-1">Drafting analysis…</span>
                     </div>
                     <AnalysisSkeleton />
                   </div>
                 )}
                 {error && (
-                  <div className="flex gap-3 items-start glass border-destructive/40 bg-destructive/5 p-4 animate-fade-up">
+                  <div className="flex gap-3 items-start glass border-destructive/40 p-4 animate-fade-up">
                     <AlertTriangle className="size-4 text-destructive shrink-0 mt-0.5" />
                     <div className="text-sm text-foreground/80">{error}</div>
                   </div>
@@ -167,8 +167,8 @@ function ChatPage() {
               onSubmit={(e) => { e.preventDefault(); send(input); }}
               className="max-w-3xl mx-auto"
             >
-              <div className="glass-strong flex items-end gap-2 p-2.5 pl-3 focus-within:border-primary/40 transition-colors">
-                <button type="button" className="size-10 shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-accent transition-colors" aria-label="Attach file">
+              <div className="glass-strong flex items-end gap-2 p-2.5 pl-3 focus-within:border-foreground transition-colors">
+                <button type="button" className="size-10 shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" aria-label="Attach file">
                   <Paperclip className="size-5" strokeWidth={1.5} />
                 </button>
                 <textarea
@@ -184,7 +184,7 @@ function ChatPage() {
                 <button
                   type="submit"
                   disabled={!input.trim() || thinking}
-                  className="size-10 shrink-0 flex items-center justify-center rounded-full lavender-bg text-white hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5"
+                  className="size-10 shrink-0 flex items-center justify-center rounded-full bg-foreground text-background hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5"
                   aria-label="Send"
                 >
                   <Send className="size-4" strokeWidth={2} />
@@ -203,15 +203,15 @@ function ChatPage() {
 
 function EmptyState({ onPick }: { onPick: (s: string) => void }) {
   return (
-    <div className="max-w-3xl mx-auto text-center pt-12 animate-fade-up">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border mb-7 shadow-soft">
-        <Sparkles className="size-3.5 text-primary" />
+    <div className="max-w-3xl mx-auto pt-12 animate-fade-up">
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-border mb-7">
+        <span className="size-1.5 rounded-full bg-foreground animate-slow-pulse" />
         <span className="text-xs font-medium text-muted-foreground">LexiAI Console</span>
       </div>
-      <h1 className="text-5xl md:text-6xl mb-4 text-balance tracking-[-0.035em] font-semibold">
-        Ask anything <span className="font-serif italic font-normal accent-text">legal</span>.
+      <h1 className="text-5xl md:text-7xl mb-5 text-balance tracking-[-0.045em] font-bold leading-[0.95]">
+        Ask anything legal.
       </h1>
-      <p className="text-muted-foreground mb-12 text-lg">
+      <p className="text-muted-foreground mb-12 text-lg max-w-xl">
         Paste a judgment, upload a contract, or ask a question. Receive a structured plain-language analysis with risk, timeline, and next steps.
       </p>
       <div className="grid sm:grid-cols-2 gap-3 text-left">
@@ -221,7 +221,7 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
             onClick={() => onPick(s)}
             className="glass p-5 hover-lift text-sm text-foreground text-left"
           >
-            <div className="text-xs font-medium text-primary mb-2">Suggested</div>
+            <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-[0.12em]">Suggested</div>
             {s}
           </button>
         ))}
@@ -233,7 +233,7 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end animate-fade-up">
-      <div className="max-w-[80%] lavender-bg text-white px-5 py-3.5 rounded-3xl rounded-tr-md whitespace-pre-wrap shadow-[0_8px_24px_-10px_oklch(0.55_0.18_295/0.4)]">
+      <div className="max-w-[80%] bg-foreground text-background px-5 py-3.5 rounded-3xl rounded-tr-md whitespace-pre-wrap">
         {text}
       </div>
     </div>
@@ -244,7 +244,7 @@ function AiTurn({ turn }: { turn: Extract<Turn, { role: "ai" }> }) {
   if (!turn.analysis) {
     return (
       <div className="flex gap-3 animate-fade-up">
-        <div className="size-9 shrink-0 rounded-full lavender-bg flex items-center justify-center text-white text-xs font-semibold mt-1">
+        <div className="size-9 shrink-0 rounded-full bg-foreground flex items-center justify-center text-background text-xs font-bold mt-1">
           L
         </div>
         <div className="flex-1 glass p-6 text-foreground/85 text-sm whitespace-pre-wrap">
@@ -255,7 +255,7 @@ function AiTurn({ turn }: { turn: Extract<Turn, { role: "ai" }> }) {
   }
   return (
     <div className="flex gap-3 animate-fade-up">
-      <div className="size-9 shrink-0 rounded-full lavender-bg flex items-center justify-center text-white text-xs font-semibold mt-1">
+      <div className="size-9 shrink-0 rounded-full bg-foreground flex items-center justify-center text-background text-xs font-bold mt-1">
         L
       </div>
       <div className="flex-1 min-w-0">

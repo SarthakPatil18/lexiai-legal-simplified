@@ -5,10 +5,10 @@ export function Footer() {
         <div className="grid md:grid-cols-3 gap-10 mb-12">
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="size-7 rounded-full lavender-bg flex items-center justify-center">
-                <span className="text-white font-semibold text-xs">L</span>
+              <div className="size-7 rounded-full bg-foreground flex items-center justify-center">
+                <span className="text-background font-bold text-xs">L</span>
               </div>
-              <span className="text-base font-semibold tracking-tight">LexiAI</span>
+              <span className="text-base font-semibold tracking-[-0.02em]">LexiAI</span>
             </div>
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
               The standard for AI-assisted legal understanding. Stockholm · London · Singapore.

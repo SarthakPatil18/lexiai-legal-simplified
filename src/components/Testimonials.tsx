@@ -20,10 +20,10 @@ export function Testimonials() {
   return (
     <section id="testimonials" className="relative py-28 md:py-36 px-6 md:px-10">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16 max-w-2xl mx-auto">
-          <div className="text-xs font-medium text-primary mb-4 uppercase tracking-[0.15em]">Reviews</div>
-          <h2 className="text-4xl md:text-5xl text-balance tracking-[-0.03em] font-semibold">
-            Trusted by those who can't afford to <span className="font-serif italic font-normal accent-text">guess</span>.
+        <div className="mb-16 max-w-2xl">
+          <div className="text-xs font-medium text-muted-foreground mb-5 uppercase tracking-[0.15em]">Reviews</div>
+          <h2 className="text-4xl md:text-6xl text-balance tracking-[-0.04em] font-bold leading-[0.95]">
+            Trusted by those who can't afford to guess.
           </h2>
         </div>
 
@@ -34,11 +34,11 @@ export function Testimonials() {
               className="glass p-7 flex flex-col hover-lift animate-fade-up"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <blockquote className="text-base leading-relaxed text-foreground mb-6 flex-1 tracking-[-0.01em]">
+              <blockquote className="text-base leading-relaxed text-foreground mb-7 flex-1 tracking-[-0.01em]">
                 "{t.quote}"
               </blockquote>
-              <figcaption className="border-t border-border pt-4 flex items-center gap-3">
-                <div className="size-10 rounded-full lavender-bg flex items-center justify-center text-white text-sm font-semibold">
+              <figcaption className="border-t border-border pt-5 flex items-center gap-3">
+                <div className="size-10 rounded-full bg-secondary flex items-center justify-center text-foreground text-sm font-semibold">
                   {t.name.charAt(0)}
                 </div>
                 <div>

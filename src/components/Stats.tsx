@@ -33,13 +33,11 @@ function useCountUp(target: number, duration = 1800) {
 function StatCard({ value, suffix, label }: { value: number; suffix: string; label: string }) {
   const { ref, val } = useCountUp(value);
   return (
-    <div ref={ref} className="text-center">
-      <div className="text-6xl md:text-7xl mb-3 font-semibold tracking-[-0.04em] tabular-nums">
-        {val.toLocaleString()}<span className="accent-text">{suffix}</span>
+    <div ref={ref}>
+      <div className="text-6xl md:text-7xl lg:text-8xl mb-4 font-bold tracking-[-0.05em] tabular-nums leading-none">
+        {val.toLocaleString()}{suffix}
       </div>
-      <div className="text-sm text-muted-foreground">
-        {label}
-      </div>
+      <div className="text-sm text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -47,8 +45,7 @@ function StatCard({ value, suffix, label }: { value: number; suffix: string; lab
 export function Stats() {
   return (
     <section id="stats" className="relative py-28 md:py-36 px-6 md:px-10">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] bg-primary/5 blur-[140px] rounded-full pointer-events-none" />
-      <div className="relative max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+      <div className="relative max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
         <StatCard value={10000} suffix="+" label="Documents analyzed" />
         <StatCard value={95} suffix="%" label="Faster understanding" />
         <StatCard value={24} suffix="/7" label="AI legal help" />
