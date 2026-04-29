@@ -10,10 +10,10 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const stored = (localStorage.getItem("lexi-theme") as Theme | null) ?? "dark";
+    const stored = (localStorage.getItem("lexi-theme") as Theme | null) ?? "light";
     setTheme(stored);
     applyTheme(stored);
   }, []);
@@ -29,7 +29,7 @@ export function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="size-10 flex items-center justify-center border border-gold/30 text-gold hover:bg-gold/10 hover:border-gold/60 transition-all hover:-translate-y-0.5"
+      className="size-10 rounded-full flex items-center justify-center border border-border bg-surface text-foreground hover:border-primary/40 transition-all hover:-translate-y-0.5"
     >
       {theme === "dark" ? (
         <Sun className="size-4" strokeWidth={1.75} />

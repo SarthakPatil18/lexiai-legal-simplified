@@ -100,27 +100,27 @@ function ChatPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-onyx text-parchment flex flex-col">
+    <div className="min-h-dvh bg-background text-foreground flex flex-col">
       <SiteNav />
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[280px_1fr] max-w-[1600px] w-full mx-auto">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[280px_1fr] max-w-[1500px] w-full mx-auto">
         {/* Sidebar */}
-        <aside className="hidden lg:flex flex-col border-r border-gold/10 p-5 gap-2">
+        <aside className="hidden lg:flex flex-col border-r border-border p-5 gap-2">
           <button
             onClick={newConsult}
-            className="flex items-center justify-between gap-2 px-4 py-3 border border-gold/30 text-gold text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-gold/5 transition-colors mb-4"
+            className="btn-primary text-sm flex items-center justify-between gap-2 mb-4"
           >
-            New Consultation <Plus className="size-4" />
+            New consultation <Plus className="size-4" />
           </button>
-          <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-parchment/40 px-2 mb-2">
-            Recent Threads
+          <div className="text-xs font-medium text-muted-foreground px-2 mb-2 mt-2">
+            Recent threads
           </div>
           {STARTER_THREADS.map((t) => (
             <button
               key={t}
-              className="flex items-center gap-3 px-3 py-2.5 text-sm text-parchment/70 hover:text-gold hover:bg-gold/5 transition-colors text-left border border-transparent hover:border-gold/20"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-left"
             >
-              <MessageSquare className="size-3.5 shrink-0 text-gold/60" />
+              <MessageSquare className="size-3.5 shrink-0 text-primary/60" />
               <span className="truncate">{t}</span>
             </button>
           ))}
@@ -128,11 +128,11 @@ function ChatPage() {
 
         {/* Chat */}
         <main className="flex flex-col h-[calc(100dvh-5rem)]">
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 md:px-12 py-10">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 md:px-10 py-10">
             {turns.length === 0 && !thinking ? (
               <EmptyState onPick={send} />
             ) : (
-              <div className="max-w-3xl mx-auto space-y-10">
+              <div className="max-w-3xl mx-auto space-y-8">
                 {turns.map((m, i) =>
                   m.role === "user" ? (
                     <UserBubble key={i} text={m.text} />
@@ -142,11 +142,11 @@ function ChatPage() {
                 )}
                 {thinking && (
                   <div className="animate-fade-up">
-                    <div className="flex items-center gap-3 mb-4 text-[10px] font-bold tracking-[0.3em] uppercase text-gold">
-                      <span className="size-1.5 rounded-full bg-gold animate-typing" />
-                      <span className="size-1.5 rounded-full bg-gold animate-typing [animation-delay:150ms]" />
-                      <span className="size-1.5 rounded-full bg-gold animate-typing [animation-delay:300ms]" />
-                      <span>Drafting analysis…</span>
+                    <div className="flex items-center gap-2 mb-4 text-xs font-medium text-primary">
+                      <span className="size-1.5 rounded-full bg-primary animate-typing" />
+                      <span className="size-1.5 rounded-full bg-primary animate-typing [animation-delay:150ms]" />
+                      <span className="size-1.5 rounded-full bg-primary animate-typing [animation-delay:300ms]" />
+                      <span className="ml-1">Drafting analysis…</span>
                     </div>
                     <AnalysisSkeleton />
                   </div>
@@ -154,7 +154,7 @@ function ChatPage() {
                 {error && (
                   <div className="flex gap-3 items-start glass border-destructive/40 bg-destructive/5 p-4 animate-fade-up">
                     <AlertTriangle className="size-4 text-destructive shrink-0 mt-0.5" />
-                    <div className="text-sm text-parchment/80">{error}</div>
+                    <div className="text-sm text-foreground/80">{error}</div>
                   </div>
                 )}
               </div>
@@ -162,13 +162,13 @@ function ChatPage() {
           </div>
 
           {/* Composer */}
-          <div className="border-t border-gold/10 px-6 md:px-12 py-6">
+          <div className="px-6 md:px-10 py-6">
             <form
               onSubmit={(e) => { e.preventDefault(); send(input); }}
               className="max-w-3xl mx-auto"
             >
-              <div className="glass signet flex items-end gap-2 p-3 focus-within:border-gold/60 transition-colors">
-                <button type="button" className="size-10 shrink-0 flex items-center justify-center text-parchment/50 hover:text-gold transition-colors" aria-label="Attach file">
+              <div className="glass-strong flex items-end gap-2 p-2.5 pl-3 focus-within:border-primary/40 transition-colors">
+                <button type="button" className="size-10 shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-accent transition-colors" aria-label="Attach file">
                   <Paperclip className="size-5" strokeWidth={1.5} />
                 </button>
                 <textarea
@@ -179,18 +179,18 @@ function ChatPage() {
                   }}
                   rows={1}
                   placeholder="Paste a judgment, contract clause, or ask a legal question…"
-                  className="flex-1 bg-transparent resize-none outline-none text-parchment placeholder:text-parchment/40 py-2.5 max-h-40"
+                  className="flex-1 bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground py-3 max-h-40 text-[15px]"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || thinking}
-                  className="size-10 shrink-0 flex items-center justify-center bg-gold text-onyx hover:bg-gold-soft disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="size-10 shrink-0 flex items-center justify-center rounded-full lavender-bg text-white hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5"
                   aria-label="Send"
                 >
                   <Send className="size-4" strokeWidth={2} />
                 </button>
               </div>
-              <p className="text-[10px] tracking-[0.2em] uppercase text-parchment/30 text-center mt-3 font-bold">
+              <p className="text-xs text-muted-foreground text-center mt-3">
                 Informational only · Not a substitute for legal counsel
               </p>
             </form>
@@ -204,14 +204,14 @@ function ChatPage() {
 function EmptyState({ onPick }: { onPick: (s: string) => void }) {
   return (
     <div className="max-w-3xl mx-auto text-center pt-12 animate-fade-up">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-gold/20 bg-gold/5 mb-6">
-        <Sparkles className="size-3 text-gold" />
-        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gold">LexiAI Console</span>
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-border mb-7 shadow-soft">
+        <Sparkles className="size-3.5 text-primary" />
+        <span className="text-xs font-medium text-muted-foreground">LexiAI Console</span>
       </div>
-      <h1 className="font-serif text-5xl md:text-6xl mb-4 text-balance">
-        Ask anything <span className="italic gold-text">legal</span>.
+      <h1 className="text-5xl md:text-6xl mb-4 text-balance tracking-[-0.035em] font-semibold">
+        Ask anything <span className="font-serif italic font-normal accent-text">legal</span>.
       </h1>
-      <p className="text-parchment/60 mb-12">
+      <p className="text-muted-foreground mb-12 text-lg">
         Paste a judgment, upload a contract, or ask a question. Receive a structured plain-language analysis with risk, timeline, and next steps.
       </p>
       <div className="grid sm:grid-cols-2 gap-3 text-left">
@@ -219,9 +219,9 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
           <button
             key={s}
             onClick={() => onPick(s)}
-            className="glass p-5 hover-lift text-sm text-parchment/80 hover:text-parchment text-left"
+            className="glass p-5 hover-lift text-sm text-foreground text-left"
           >
-            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-gold mb-2">Suggested</div>
+            <div className="text-xs font-medium text-primary mb-2">Suggested</div>
             {s}
           </button>
         ))}
@@ -233,7 +233,7 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end animate-fade-up">
-      <div className="max-w-[80%] bg-gold/10 border border-gold/20 px-5 py-4 text-parchment whitespace-pre-wrap">
+      <div className="max-w-[80%] lavender-bg text-white px-5 py-3.5 rounded-3xl rounded-tr-md whitespace-pre-wrap shadow-[0_8px_24px_-10px_oklch(0.55_0.18_295/0.4)]">
         {text}
       </div>
     </div>
@@ -243,20 +243,20 @@ function UserBubble({ text }: { text: string }) {
 function AiTurn({ turn }: { turn: Extract<Turn, { role: "ai" }> }) {
   if (!turn.analysis) {
     return (
-      <div className="flex gap-4 animate-fade-up">
-        <div className="size-9 shrink-0 border border-gold/40 flex items-center justify-center mt-1">
-          <div className="size-1.5 bg-gold" />
+      <div className="flex gap-3 animate-fade-up">
+        <div className="size-9 shrink-0 rounded-full lavender-bg flex items-center justify-center text-white text-xs font-semibold mt-1">
+          L
         </div>
-        <div className="flex-1 glass p-6 text-parchment/80 text-sm whitespace-pre-wrap">
+        <div className="flex-1 glass p-6 text-foreground/85 text-sm whitespace-pre-wrap">
           {turn.raw || "No response."}
         </div>
       </div>
     );
   }
   return (
-    <div className="flex gap-4 animate-fade-up">
-      <div className="size-9 shrink-0 border border-gold/40 flex items-center justify-center mt-1">
-        <div className="size-1.5 bg-gold" />
+    <div className="flex gap-3 animate-fade-up">
+      <div className="size-9 shrink-0 rounded-full lavender-bg flex items-center justify-center text-white text-xs font-semibold mt-1">
+        L
       </div>
       <div className="flex-1 min-w-0">
         <LegalAnalysis data={turn.analysis} />

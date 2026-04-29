@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <div className="min-h-dvh bg-onyx text-parchment">
+    <div className="min-h-dvh bg-background text-foreground">
       <SiteNav />
       <Hero />
       <Features />
