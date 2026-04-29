@@ -69,13 +69,13 @@ export function LegalAnalysis({ data }: { data: Analysis }) {
     <div className="space-y-4">
       {/* View toggle */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="inline-flex p-1 rounded-full bg-accent border border-border">
+        <div className="inline-flex p-1 rounded-full bg-secondary border border-border">
           {(["simple", "detailed"] as View[]).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
               className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
-                view === v ? "bg-surface text-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"
+                view === v ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {v === "simple" ? "Simple" : "Detailed"}
